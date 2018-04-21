@@ -13,6 +13,9 @@ def save_imgs(epoch, generator, detector):
   noise = np.random.normal(0, 1, (r * c, 100))
   gen_imgs = generator.predict(noise)
 
+  # Make Output Dir
+  os.makedirs('output', exist_ok=True)
+  
   # Test One and Save Results
   y = detector.predict(gen_imgs)
   np.save('output/%d_img.npy' % epoch, gen_imgs)
