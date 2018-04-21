@@ -19,10 +19,10 @@ def resnet_layer(inputs, num_filters=16, kernel_size=3, strides=1,
                 kernel_regularizer=l2(1e-4))
 
   x = inputs
-  
+
   if conv_first:
     x = conv(x)
-  
+
     if batch_normalization:
       x = BatchNormalization()(x)
 
@@ -32,10 +32,10 @@ def resnet_layer(inputs, num_filters=16, kernel_size=3, strides=1,
   else:
     if batch_normalization:
       x = BatchNormalization()(x)
-    
+
     if activation is not None:
       x = Activation(activation)(x)
-    
+
     x = conv(x)
 
   return x
@@ -92,7 +92,7 @@ def build_detector(input_shape, depth_scale):
   x = Activation('relu')(x)
   x = AveragePooling2D(pool_size=8)(x)
   y = Flatten()(x)
-  outputs = Dense(2, activation='relu', kernel_initializer='he_normal')(y)
+  outputs = Dense(1, activation='sigmoid', kernel_initializer='he_normal')(y)
 
   # Create Model
   model = Model(inputs=inputs, outputs=outputs)

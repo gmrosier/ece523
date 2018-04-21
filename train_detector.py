@@ -29,7 +29,7 @@ def train_detector(x_train, y_train, x_test, y_test, batch_size, epochs):
   model = build_detector(input_shape, 3)
 
   # Train
-  model.compile(loss='categorical_crossentropy',
+  model.compile(loss='binary_crossentropy',
                 optimizer=Adam(lr=lr_schedule(0)),
                 metrics=['accuracy'])
   model.summary()
@@ -50,7 +50,7 @@ def train_detector(x_train, y_train, x_test, y_test, batch_size, epochs):
   callbacks = [checkpoint, lr_reducer, lr_scheduler]
 
   # Run Training
-  model.fit(x_train, y_train, batch_size=batch_size, epochs=epochs, 
+  model.fit(x_train, y_train, batch_size=batch_size, epochs=epochs,
             validation_data=(x_test, y_test), shuffle=True, callbacks=callbacks)
 
   return model
@@ -73,10 +73,8 @@ x_test -= x_train_mean
 # Convert to Binary (Cat / Not Cat)
 y_train[y_train != 3] = 0
 y_train[y_train == 3] = 1
-y_train = keras.utils.to_categorical(y_train, 2)
 y_test[y_test != 3] = 0
 y_test[y_test == 3] = 1
-y_test = keras.utils.to_categorical(y_test, 2)
 
 # Train Model
 model = train_detector(x_train, y_train, x_test, y_test, 32, 200)
