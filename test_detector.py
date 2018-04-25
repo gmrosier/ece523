@@ -6,7 +6,7 @@ from keras.models import load_model
 from keras.datasets import cifar10
 
 # Load Model
-model = load_model('trained_models/cat_generator.h5')
+model = load_model('trained_models/cifar10_detector_model.h5')
 model.summary()
 
 # Load Data
@@ -26,6 +26,6 @@ print('Test accuracy:', scores[1])
 # Test One Cat Image
 cat_idx =  y_test.flatten().tolist().index(3)
 cat_img = x_test[cat_idx,:,:,:]
-print("Pred Cat: {}".format(model.predict(np.reshape(cat_img, (1,32,32,3)))[3]*100))
+print("Pred Cat: {}".format(model.predict(np.reshape(cat_img, (1,32,32,3)))[0,3]*100))
 plt.imshow(cat_img)
 plt.show()
