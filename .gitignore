@@ -6,3 +6,5 @@ output/
 *.sublime-project
 
 *.sublime-workspace
+
+saved_models/

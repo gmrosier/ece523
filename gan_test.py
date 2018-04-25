@@ -22,7 +22,7 @@ def save_imgs(epoch, noise, images, scale, batch_size, generator, detector):
   os.makedirs('output', exist_ok=True)
 
   # Test One and Save Results
-  y = detector.predict(gen_imgs)
+  y = detector.predict(gen_imgs) * 100
   np.save('output/%d_img.npy' % epoch, gen_imgs)
   np.savetxt('output/%d_cat.txt' % epoch, y)
 
@@ -83,7 +83,8 @@ def train_gan(batch_size, epochs, model, generator, detector):
     noise = np.random.normal(0, 1, (batch_size, 100))
 
     # Generator Wants Cats
-    valid_y = np.ones((batch_size,))
+    valid_y = np.ones((batch_size,)) * 3
+    y_valid = keras.utils.to_categorical(valid_y, 10)
 
     # Create Scale
     scale = np.ones(cat_imgs.shape) * e_scale[epoch]
@@ -92,7 +93,7 @@ def train_gan(batch_size, epochs, model, generator, detector):
     imgs = cat_imgs * (1 - scale)
 
     # Train the generator
-    metrics = model.train_on_batch(noise, valid_y)
+    metrics = model.train_on_batch(noise, y_valid)
     #metrics = model.train_on_batch([noise, scale, imgs], valid_y)
 
     # Save Image
@@ -106,7 +107,7 @@ def train_gan(batch_size, epochs, model, generator, detector):
 optimizer = RMSprop(lr=0.0001)
 
 # Load Detector
-detector = load_model('trained_models/cat_detector_model.h5')
+detector = load_model('trained_models/cifar10_detector_model.h5')
 detector.summary()
 
 
@@ -114,7 +115,7 @@ detector.summary()
 image_shape = (32,32,3)
 generator = build_generator((100,), image_shape)
 generator.summary()
-generator.compile(loss='binary_crossentropy', optimizer=optimizer)
+generator.compile(loss='categorical_crossentropy', optimizer=optimizer)
 
 # The generator takes noise as input and generated imgs
 z = Input(shape=(100,))
@@ -135,7 +136,7 @@ for layer in detector.layers:
     layer.trainable = False
 
 # Compile Model
-combined.compile(loss='binary_crossentropy', optimizer=optimizer, metrics=['accuracy'])
+combined.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['accuracy'])
 combined.summary()
 
 # Train Generator
