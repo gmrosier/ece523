@@ -6,7 +6,7 @@ from keras.models import load_model
 from keras.datasets import cifar10
 
 # Load Model
-model = load_model('trained_models/cifar10_detector_model.h5')
+model = load_model('trained_models/cat_generator.h5')
 model.summary()
 
 # Load Data
