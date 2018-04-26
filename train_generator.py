@@ -1,3 +1,5 @@
+# Train A GAN with the normal detector model 
+
 import os
 import numpy as np
 from matplotlib import pyplot as plt
@@ -43,8 +45,6 @@ def save_imgs(epoch, noise, images, scale, batch_size, generator, detector):
 
 def build_generator(noise_shape, image_shape):
   noise = Input(shape=noise_shape)
-  #img = Input(shape=image_shape)
-  #scale = Input(shape=image_shape)
   x = Dense(128 * 8 * 8, activation="relu", input_shape=noise_shape)(noise)
   x = Reshape((8, 8, 128))(x)
   x = BatchNormalization(momentum=0.8)(x)
@@ -58,10 +58,7 @@ def build_generator(noise_shape, image_shape):
   x = BatchNormalization(momentum=0.8)(x)
   x = Conv2D(3, kernel_size=4, padding="same")(x)
   x = Activation("sigmoid")(x)
-  #x = Multiply()([x, scale])
-  #x = Add()([x, img])
 
-  #return Model([noise, scale, img], x, name='generator')
   return Model(noise, x, name='generator')
 
 
@@ -119,16 +116,12 @@ generator.compile(loss='categorical_crossentropy', optimizer=optimizer)
 
 # The generator takes noise as input and generated imgs
 z = Input(shape=(100,))
-oimg = Input(shape=image_shape)
-scl = Input(shape=image_shape)
-#img = generator([z, scl, oimg])
 img = generator(z)
 
 # The valid takes generated images as input and determines validity
 valid = detector(img)
 
 # Buuild combined model
-#combined = Model([z, scl, oimg], valid, name='combined')
 combined = Model(z, valid, name='combined')
 
 # Freeze Detector Layers
