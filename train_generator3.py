@@ -45,7 +45,7 @@ def predict(x, image, detector):
 
 def success(x, convergence=0.1, image=None, detector=None):
   # Modifiy the specified pixels
-  mimg = modify(x, img)
+  mimg = modify(x, image)
   pred = detector.predict(np.reshape(mimg, (1,32,32,3)))[0][0]
   
   # Return if image is no longer a cat

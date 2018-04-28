@@ -3,6 +3,7 @@ from matplotlib import pyplot as plt
 
 import keras
 from keras.models import load_model
+from keras.callbacks import LearningRateScheduler
 from keras.datasets import cifar10
 
 # Load Model
@@ -26,6 +27,8 @@ print('Test accuracy:', scores[1])
 # Test One Cat Image
 cat_idx =  y_test.flatten().tolist().index(3)
 cat_img = x_test[cat_idx,:,:,:]
-print("Pred Cat: {}".format(model.predict(np.reshape(cat_img, (1,32,32,3)))[0,3]*100))
+pred = model.predict(np.reshape(cat_img, (1,32,32,3)))[0]
+print(pred)
+print("Pred Cat: {}".format(pred[3]*100))
 plt.imshow(cat_img)
 plt.show()
