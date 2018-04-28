@@ -69,6 +69,9 @@ noise = np.random.normal(0, 1, (1, 100))
 
 # generate cat image
 cat_img = gmodel.predict(noise)[0]
+if (0) : # make it look more washed out like the dataset images
+    cat_img = cat_img * 0.5 # reduce contrast
+    cat_img += 0.5 # increase brightness
 plot(cat_img,'essence of cat to be used as a cat costume')
 
 
@@ -79,7 +82,7 @@ images = len(x_test)
 x = np.copy(x_test[0:images])
 y = y_test[0:images]
 
-# pair down test images to only things the detector thought were non-cats, and therefore in need of a costume
+# pare down test images to only things the detector thought were non-cats, and therefore in need of a costume
 y_pred = model.predict(x, verbose=1)
 non_cat_idx = []
 for i in range(images) :
