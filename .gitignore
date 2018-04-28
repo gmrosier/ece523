@@ -8,3 +8,5 @@ output/
 *.sublime-workspace
 
 saved_models/
+
+*.p
