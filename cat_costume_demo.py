@@ -69,7 +69,7 @@ noise = np.random.normal(0, 1, (1, 100))
 
 # generate cat image
 cat_img = gmodel.predict(noise)[0]
-if (0) : # make it look more washed out like the dataset images
+if (1) : # make it look more washed out like the dataset images
     cat_img = cat_img * 0.5 # reduce contrast
     cat_img += 0.5 # increase brightness
 plot(cat_img,'essence of cat to be used as a cat costume')
