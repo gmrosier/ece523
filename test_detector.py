@@ -1,3 +1,10 @@
+"""
+Loads the specified pre-trained model and tests it against the
+CIFAR-10 test data.
+
+This file was created to test how to load a file from a file.
+"""
+
 import numpy as np
 from matplotlib import pyplot as plt
 

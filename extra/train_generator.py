@@ -1,4 +1,4 @@
-# Train A GAN with the detector model only outputing the probability of a cat
+# Train A GAN with the normal detector model 
 
 import os
 import numpy as np
@@ -6,15 +6,18 @@ from matplotlib import pyplot as plt
 import keras
 import keras.backend as K
 from keras.models import load_model, Sequential, Model
-from keras.layers import Input, Dense, Reshape, UpSampling2D, Conv2D, Lambda
+from keras.layers import Input, Dense, Reshape, UpSampling2D, Conv2D
 from keras.layers import BatchNormalization, Activation, Add, Multiply
 from keras.optimizers import RMSprop
 from keras.datasets import cifar10
 
-def save_imgs(epoch, noise, batch_size, generator, detector):
+def save_imgs(epoch, noise, images, scale, batch_size, generator, detector):
   r, c = 5, 5
   idxs = np.random.randint(0, batch_size, (r * c))
   n = noise[idxs, :]
+  i = images[idxs, :, :, :]
+  s = scale[idxs, :, :, :]
+  #gen_imgs = generator.predict([n, s, i])
   gen_imgs = generator.predict(n)
 
   # Make Output Dir
@@ -40,20 +43,7 @@ def save_imgs(epoch, noise, batch_size, generator, detector):
   plt.close()
 
 
-def build_detector():
-  def cat_only(x):
-    z = np.zeros((10,1))
-    z[3] = 1
-    y = K.constant(z)
-    return K.dot(x, y)
-
-  # Load Detector
-  base_model = load_model('trained_models/cifar10_detector_model.h5')
-  y = Lambda(cat_only)(base_model.output)
-  return Model(base_model.input, y, name='detector')
-
-
-def build_generator(noise_shape):
+def build_generator(noise_shape, image_shape):
   noise = Input(shape=noise_shape)
   x = Dense(128 * 8 * 8, activation="relu", input_shape=noise_shape)(noise)
   x = Reshape((8, 8, 128))(x)
@@ -77,20 +67,35 @@ def train_gan(batch_size, epochs, model, generator, detector):
   # Load Data
   _, (x_test, y_test) = cifar10.load_data()
 
-  # Train  
+  # Load One Cat Image
+  cat_idxs = [i for i, x in enumerate(y_test.flatten().tolist()) if x == 3]
+  cat_imgs = x_test[cat_idxs,:,:,:]
+  cat_imgs = cat_imgs.astype('float32') / 255.0
+  cat_imgs = cat_imgs[0:batch_size, :, :, :]
+
+  e_scale = a = np.linspace(0.1,1,10001)**6
+
   for epoch in range(epochs):
     # Build Noise Vector
     noise = np.random.normal(0, 1, (batch_size, 100))
 
     # Generator Wants Cats
-    y_valid = np.ones((batch_size,))
+    valid_y = np.ones((batch_size,)) * 3
+    y_valid = keras.utils.to_categorical(valid_y, 10)
+
+    # Create Scale
+    scale = np.ones(cat_imgs.shape) * e_scale[epoch]
+
+    # Scale Image
+    imgs = cat_imgs * (1 - scale)
 
     # Train the generator
     metrics = model.train_on_batch(noise, y_valid)
+    #metrics = model.train_on_batch([noise, scale, imgs], valid_y)
 
     # Save Image
     if epoch % 1000 == 0:
-      save_imgs(epoch, noise, batch_size, generator, detector)
+      save_imgs(epoch, noise, imgs, scale, batch_size, generator, detector)
 
       # Plot the progress
       print ("%5d [G loss: %f, accuracy: %f]" % (epoch, metrics[0], metrics[1]))
@@ -98,14 +103,16 @@ def train_gan(batch_size, epochs, model, generator, detector):
 # Optimizer
 optimizer = RMSprop(lr=0.0001)
 
-# Build Detector
-detector = build_detector()
+# Load Detector
+detector = load_model('trained_models/cifar10_detector_model.h5')
 detector.summary()
 
+
 # Build Generator
-generator = build_generator((100,))
+image_shape = (32,32,3)
+generator = build_generator((100,), image_shape)
 generator.summary()
-generator.compile(loss='binary_crossentropy', optimizer=optimizer)
+generator.compile(loss='categorical_crossentropy', optimizer=optimizer)
 
 # The generator takes noise as input and generated imgs
 z = Input(shape=(100,))
@@ -122,11 +129,11 @@ for layer in detector.layers:
     layer.trainable = False
 
 # Compile Model
-combined.compile(loss='binary_crossentropy', optimizer=optimizer, metrics=['accuracy'])
+combined.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['accuracy'])
 combined.summary()
 
 # Train Generator
 train_gan(32, 10001, combined, generator, detector)
 
 # Save Generator
-generator.save('trained_models/cat_generator2.hd5')
+generator.save('trained_models/cat_generator.hd5')
