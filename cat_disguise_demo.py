@@ -97,7 +97,7 @@ ulx_range = range(12,19)
 uly_range = range(12,19)
 max_val   = 2**(3*3)
 # this has already been characterized, so the val_range will be truncated to known good values for expediency
-val_range = [1,59,438,463,495,503,510] #list(range(55,60)) + list(range(430,max_val)) # all binary combinations of the 3x3 pixel pattern
+val_range = range(1,max_val) #[1,5,21,59,438,463,495,503,510] #list(range(55,60)) + list(range(430,max_val)) # all binary combinations of the 3x3 pixel pattern
 vals = len(val_range)
 low_cat_score = np.ones([max_val,images])
 
@@ -127,20 +127,26 @@ for val in val_range :
                     low_cat_score[val,i] = cat_score
                     best_ulx[val,i] = ulx
                     best_uly[val,i] = uly
+                    if (0) : # plot all improved images
+                        c = np.argmax(y_pred[i])
+                        if ((not c==cat_idx) and (y_pred[i,c]>0.9)) :
+                            plot(x[i], "disguise {:d} reduced cat {:d} probability from {:0.3f} to {:0.3f} \nis now a {:s} with {:0.3f} probability".
+                            format(val,i,initial_cat_score[i],low_cat_score[val,i], class_names[c], y_pred[i,c] ))
+            
+    if (0) : # display best disguised winners
+        best_disguised     = np.argpartition(low_cat_score[val], 1)[0]
+        best_disguised_img = np.copy(x_cat_test[best_disguised])
+        best_disguised_img = sticker_image(best_disguised_img,sticker,best_ulx[val,best_disguised],best_uly[val,best_disguised])
+        best_disguised_pred = model.predict(np.reshape(best_disguised_img,[1,32,32,3]))
+        c = np.argmax(best_disguised_pred[0])
 
-    best_disguised     = np.argpartition(low_cat_score[val], 1)[0]
-    best_disguised_img = np.copy(x_cat_test[best_disguised])
-    best_disguised_img = sticker_image(best_disguised_img,sticker,best_ulx[val,best_disguised],best_uly[val,best_disguised])
-    best_disguised_pred = model.predict(np.reshape(best_disguised_img,[1,32,32,3]))
-    c = np.argmax(best_disguised_pred[0])
+        plot(best_disguised_img, "disguise {:d} reduced cat {:d} probability from {:0.3f} to {:0.3f} \nis now a {:s} with {:0.3f} probability".
+        format(val,best_disguised,initial_cat_score[best_disguised],low_cat_score[val,best_disguised], class_names[c], best_disguised_pred[0,c] ))
 
-    plot(best_disguised_img, "disguise {:d} reduced cat {:d} probability from {:0.3f} to {:0.3f} \nis now a {:s} with {:0.3f} probability".
-       format(val,best_disguised,initial_cat_score[best_disguised],low_cat_score[val,best_disguised], class_names[c], best_disguised_pred[0,c] ))
-
-    worst_disguised     =  np.argpartition(low_cat_score[val], -1)[0]
-    worst_disguised_img = np.copy(x_cat_test[worst_disguised])
-    worst_disguised_img = sticker_image(worst_disguised_img,sticker,best_ulx[val,worst_disguised],best_uly[val,worst_disguised])
-    plot(worst_disguised_img, "disguise {:d} failed on cat {:d} probability went from {:0.3f} to {:0.3f}".format(val,worst_disguised,initial_cat_score[worst_disguised],low_cat_score[val,worst_disguised]))
+        worst_disguised     =  np.argpartition(low_cat_score[val], -1)[0]
+        worst_disguised_img = np.copy(x_cat_test[worst_disguised])
+        worst_disguised_img = sticker_image(worst_disguised_img,sticker,best_ulx[val,worst_disguised],best_uly[val,worst_disguised])
+        plot(worst_disguised_img, "disguise {:d} failed on cat {:d} probability went from {:0.3f} to {:0.3f}".format(val,worst_disguised,initial_cat_score[worst_disguised],low_cat_score[val,worst_disguised]))
 
 
     reductions = np.subtract(initial_cat_score,low_cat_score[val,:])
@@ -151,11 +157,25 @@ for val in val_range :
         best_reduction = total_reduction[val]
         best_val       = val
 
-print("best disguise was {:d} with an average reduction of {:0.3f}".format(best_val,best_reduction/images))
+print("\nbest disguise was {:d} with an average reduction of {:0.3f}".format(best_val,best_reduction/images))
 
-#print("better disguises")
-#topN = 10
-#best_ind = np.argpartition(total_reduction, -topN)[-topN:]
-#for i in best_ind :
-#    print("{:d} = {:0.3f}".format(i,total_reduction[i]/images))
+if (1) : # print topN disguise values
+    topN = 10
+    print("\ntop {:d} disguises".format(topN))
+    best_ind = np.argpartition(total_reduction, -topN)[-topN:]
+    for i in best_ind :
+        print("{:d} = {:0.3f}".format(i,total_reduction[i]/images))
 
+
+print("\nbest disguises for given number of pixels")
+best_reduction_for_pxl_cnt = np.zeros(3*3,dtype='float')
+best_val_for_pxl_cnt = np.zeros(3*3,dtype='int')
+for val in val_range :
+    pxl_cnt = bin(val).count("1") - 1
+    if (total_reduction[val]>best_reduction_for_pxl_cnt[pxl_cnt]) :
+        best_reduction_for_pxl_cnt[pxl_cnt] = total_reduction[val]
+        best_val_for_pxl_cnt[pxl_cnt] = val
+
+for i in range(3*3) :
+    pxl_cnt = i+1
+    print("for {:d} pixels, disguise {:d} was best, with {:0.3f} average probability reduction".format(pxl_cnt,best_val_for_pxl_cnt[i],best_reduction_for_pxl_cnt[i]/images))
